@@ -3,6 +3,7 @@ project(rpl_tugas1)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(MYSQL_CONNECTOR_CPP_INCLUDE_DIR /usr/include/mysql-cppconn)
 set(MYSQL_CONNECTOR_CPP_LIB /usr/lib/libmysqlcppconn.so)
 

@@ -24,8 +24,7 @@ CREATE TABLE IF NOT EXISTS Mahasiswa (
   Mahasiswa_ID VARCHAR(5) PRIMARY KEY,
   Nama VARCHAR(50),
   Umur INT,
-  Semester INT DEFAULT 1,
-  Tanggal_Masuk DATE
+  Semester INT DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS Mahasiswa_Kelas (
@@ -52,10 +51,10 @@ INSERT IGNORE INTO Kelas (Kelas_ID, Nama, SKS, Genap) VALUES
 ('K002', 'Fisika', 3, FALSE),
 ('K003', 'Kimia', 3, TRUE);
 
-INSERT IGNORE INTO Mahasiswa (Mahasiswa_ID, Nama, Umur, Semester, Tanggal_Masuk) VALUES
-('M001', 'Rina', 19, 1, '2023-01-10'),
-('M002', 'Siti', 20, 2, '2022-09-15'),
-('M003', 'Dewi', 21, 3, '2021-08-20');
+INSERT IGNORE INTO Mahasiswa (Mahasiswa_ID, Nama, Umur, Semester) VALUES
+('M001', 'Rina', 19, 1),
+('M002', 'Siti', 20, 2),
+('M003', 'Dewi', 21, 3);
 
 INSERT IGNORE INTO Mahasiswa_Kelas (Mahasiswa_ID, Kelas_ID) VALUES
 ('M001', 'K001'),
