@@ -15,8 +15,14 @@ public:
   MySQLController(std::shared_ptr<MySQLRepository> repository);
   ~MySQLController() {}
 
-  bool show_all_tables();
-  bool show_table(int index);
+  bool read_all_tables();
+
+  bool create_table();
+  bool read_table(int index);
+  bool update_table(int index);
+  bool delete_table(int index);
+
+  bool read_all_mahasiswa_taught_by_dosen(int dosen_index);
 
 private:
   std::shared_ptr<MySQLRepository> repository;

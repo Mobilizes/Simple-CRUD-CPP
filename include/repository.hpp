@@ -25,6 +25,10 @@ public:
 
   std::optional<std::vector<std::string>> get_all_tables();
   std::optional<std::map<std::string, std::vector<std::string>>> get_table(int index);
+
+  std::optional<std::map<std::string, std::vector<std::string>>> get_all_mahasiswa_taught_by_dosen(
+    int dosen_index);
+
 private:
   sql::ConnectOptionsMap connection_properties;
 

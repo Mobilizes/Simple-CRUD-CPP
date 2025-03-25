@@ -1,4 +1,4 @@
-#include "include/controller.hpp"
+#include "../include/controller.hpp"
 
 #include <memory>
 
@@ -10,7 +10,7 @@ MySQLController::MySQLController(std::shared_ptr<MySQLRepository> repository)
   this->repository = repository;
 }
 
-bool MySQLController::show_all_tables()
+bool MySQLController::read_all_tables()
 {
   auto result = repository->get_all_tables();
   if (!result.has_value()) {
@@ -28,7 +28,7 @@ bool MySQLController::show_all_tables()
   return true;
 }
 
-bool MySQLController::show_table(int index)
+bool MySQLController::read_table(int index)
 {
   auto result = repository->get_table(index);
   if (!result.has_value()) {
@@ -39,7 +39,23 @@ bool MySQLController::show_table(int index)
   std::map<std::string, std::vector<std::string>> table_data = result.value();
 
   printer.print(table_data);
-  std::cout << '\n';
+  std::cout << std::endl;
+
+  return true;
+}
+
+bool MySQLController::read_all_mahasiswa_taught_by_dosen(int dosen_index)
+{
+  auto result = repository->get_all_mahasiswa_taught_by_dosen(dosen_index);
+  if (!result.has_value()) {
+    std::cout << "Failed to get all Mahasiswa taught by Dosen!" << std::endl;
+    return false;
+  }
+
+  std::map<std::string, std::vector<std::string>> table_data = result.value();
+
+  printer.print(table_data);
+  std::cout << std::endl;
 
   return true;
 }
