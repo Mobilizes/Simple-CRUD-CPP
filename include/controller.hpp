@@ -17,7 +17,7 @@ public:
 
   bool read_all_tables();
 
-  bool create_table();
+  bool insert_table(int index);
   bool read_table(int index);
   bool update_table(int index);
   bool delete_table(int index);

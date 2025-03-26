@@ -11,7 +11,15 @@ void input_process(std::shared_ptr<MySQLController> controller, std::string inpu
 {
   std::string prefix = input.substr(0, 2);
 
-  if (prefix.front() == 'r') {
+  if (prefix.front() == 'c') {
+    if (std::isdigit(prefix.back())) {
+      int index = std::stoi(prefix.substr(1));
+
+      if (controller->insert_table(index)) {
+        std::cout << "Data has been inserted successfully" << std::endl;
+      }
+    }
+  } else if (prefix.front() == 'r') {
     if (prefix.back() == 'a') {
       if (controller->read_all_tables()) {
         std::cout << "All tables been shown" << std::endl;
@@ -47,6 +55,7 @@ void process(std::shared_ptr<MySQLController> controller)
   std::string input;
 
   std::cout << "What would you like to do?" << std::endl;
+  std::cout << "ci. Insert a data to table of index i" << std::endl;
   std::cout << "ra. Show all tables" << std::endl;
   std::cout << "ri. Show the content of table of index i" << std::endl;
   std::cout << "rcmi. Show the content of table that shows all Mahasiswa associated with Dosen i"

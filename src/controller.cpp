@@ -28,6 +28,11 @@ bool MySQLController::read_all_tables()
   return true;
 }
 
+bool MySQLController::insert_table(int index)
+{
+  return repository->insert_table(index);
+}
+
 bool MySQLController::read_table(int index)
 {
   auto result = repository->get_table(index);

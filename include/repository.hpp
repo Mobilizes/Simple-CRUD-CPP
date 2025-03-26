@@ -3,12 +3,14 @@
 
 #include <cppconn/connection.h>
 #include <cppconn/resultset.h>
+#include <cppconn/resultset_metadata.h>
 #include <cppconn/sqlstring.h>
 #include <cppconn/statement.h>
 #include <mysql_connection.h>
 #include <mysql_driver.h>
 
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -25,11 +27,30 @@ public:
 
   std::optional<std::vector<std::string>> get_all_tables();
   std::optional<std::map<std::string, std::vector<std::string>>> get_table(int index);
-
   std::optional<std::map<std::string, std::vector<std::string>>> get_all_mahasiswa_taught_by_dosen(
     int dosen_index);
 
+  bool insert_table(int index);
+
 private:
+  struct MetadataWrapper
+  {
+    std::unique_ptr<sql::Statement> statement;
+    std::unique_ptr<sql::ResultSet> result;
+    sql::ResultSetMetaData * metadata;
+
+    MetadataWrapper(std::unique_ptr<sql::Statement> stmt, std::unique_ptr<sql::ResultSet> res)
+    : statement(std::move(stmt)), result(std::move(res)), metadata(result->getMetaData())
+    {
+    }
+
+    sql::ResultSetMetaData * getMetadata() const { return metadata; }
+  };
+
+  std::optional<MetadataWrapper> get_table_metadata(int index);
+
+  std::optional<std::vector<std::string>> get_column_names(sql::ResultSetMetaData *& metadata);
+
   sql::ConnectOptionsMap connection_properties;
 
   sql::Driver * driver = nullptr;
