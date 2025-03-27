@@ -349,6 +349,64 @@ bool MySQLRepository::update_table(int index)
   }
 }
 
+bool MySQLRepository::delete_row_in_table(int index)
+{
+  if (index <= 0 || index > table_list.size()) {
+    std::cout << "There is no such index in table list when updating data in table." << std::endl;
+    return false;
+  }
+
+  std::string table_name = table_list[index - 1];
+
+  try {
+    MetadataWrapper metadata_wrapper = get_table_metadata(index);
+    sql::ResultSetMetaData * metadata = metadata_wrapper.get_metadata();
+
+    std::string cancel_key = "\"" + generate_special_password(2);
+    std::cout << "Type (" + cancel_key + ") to cancel the deletion." << std::endl;
+
+    std::map<std::string, std::string> primary_keys;
+    for (int i = 1; i <= metadata->getColumnCount(); ++i) {
+      auto column_name = metadata->getColumnName(i);
+
+      if (column_name.length() >= 2 && column_name.substr(column_name.length() - 2, 2) == "ID") {
+        std::cout << "Enter " << column_name << ": ";
+        std::cin >> primary_keys[column_name];
+
+        if (primary_keys[column_name] == cancel_key) {
+          std::cout << std::endl << "Deletion is cancelled!" << std::endl;
+          return false;
+        }
+      }
+    }
+
+    sql::SQLString question = "DELETE FROM " + table_name + " WHERE ";
+
+    for (const auto & [key, val] : primary_keys) {
+      question += key + " = ?";
+
+      if (key != primary_keys.rbegin()->first) {
+        question += " AND ";
+      }
+    }
+
+    std::unique_ptr<sql::PreparedStatement> prep_statement(conn->prepareStatement(question));
+
+    int question_index = 1;
+    for (const auto & [key, val] : primary_keys) {
+      prep_statement->setInt(question_index++, std::stoi(val));
+    }
+
+    prep_statement->execute();
+
+  } catch (const std::exception & e) {
+    std::cerr << "Error at delete a row in table : " << e.what() << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
 MySQLRepository::MetadataWrapper MySQLRepository::get_table_metadata(int index)
 {
   if (index <= 0 || index > table_list.size()) {

@@ -15,6 +15,7 @@ void input_process(std::shared_ptr<MySQLController> controller, std::string inpu
     if (std::isdigit(prefix.back())) {
       int index = std::stoi(prefix.substr(1));
 
+      controller->read_table(index);
       if (controller->insert_table(index)) {
         std::cout << "Data has been inserted successfully" << std::endl;
       }
@@ -59,8 +60,22 @@ void input_process(std::shared_ptr<MySQLController> controller, std::string inpu
     if (std::isdigit(prefix.back())) {
       int index = std::stoi(prefix.substr(1));
 
+      controller->read_table(index);
       if (controller->update_table(index)) {
         std::cout << "Data has been updated successfully" << std::endl;
+      }
+
+      return;
+    }
+  }
+
+  if (prefix.front() == 'd') {
+    if (std::isdigit(prefix.back())) {
+      int index = std::stoi(prefix.substr(1));
+
+      controller->read_table(index);
+      if (controller->delete_table(index)) {
+        std::cout << "Data has been deleted successfully" << std::endl;
       }
 
       return;
@@ -90,17 +105,16 @@ void process(std::shared_ptr<MySQLController> controller)
   std::cout << "rmdi. Show the content of table that shows all Mahasiswa associated with Dosen i"
             << std::endl;
   std::cout << "ui. Update a data in table of index i" << std::endl;
+  std::cout << "di. Delete a data in table of index i" << std::endl;
   std::cout << "ex. Exit the program" << std::endl;
 
   std::cout << std::endl;
   std::cin >> input;
   std::cout << std::endl;
 
+  std::cout << "\033[2J\033[2H" << std::endl;
   input_process(controller, input);
-
   std::cout << std::endl;
-
-  process(controller);
 }
 
 int main()
@@ -117,7 +131,9 @@ int main()
     std::shared_ptr<MySQLController> controller = std::make_shared<MySQLController>(repository);
 
     std::cout << "\033[2J\033[2H" << std::endl;
-    process(controller);
+    while (true) {
+      process(controller);
+    }
   } catch (const std::exception & e) {
     std::cout << e.what() << std::endl;
   }

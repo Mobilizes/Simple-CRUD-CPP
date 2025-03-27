@@ -62,6 +62,16 @@ bool MySQLController::update_table(int index)
   return true;
 }
 
+bool MySQLController::delete_table(int index)
+{
+  if (!repository->delete_row_in_table(index)) {
+    std::cerr << "Delete data in table failed!" << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
 bool MySQLController::read_all_mahasiswa_taught_by_dosen(int dosen_index)
 {
   auto result = repository->get_all_mahasiswa_taught_by_dosen(dosen_index);

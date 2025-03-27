@@ -1,7 +1,7 @@
 CREATE DATABASE IF NOT EXISTS departemen;
 
 CREATE USER IF NOT EXISTS 'admin_cpp'@'localhost' IDENTIFIED BY 'abc123';
-GRANT SELECT, INSERT, UPDATE ON departemen.* TO 'admin_cpp'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON departemen.* TO 'admin_cpp'@'localhost';
 FLUSH PRIVILEGES;
 
 USE departemen;
@@ -30,15 +30,15 @@ CREATE TABLE IF NOT EXISTS Mahasiswa (
 CREATE TABLE IF NOT EXISTS Mahasiswa_Kelas (
   Mahasiswa_ID INT,
   Kelas_ID INT,
-  FOREIGN KEY (Mahasiswa_ID) REFERENCES Mahasiswa(Mahasiswa_ID),
-  FOREIGN KEY (Kelas_ID) REFERENCES Kelas(Kelas_ID)
+  FOREIGN KEY (Mahasiswa_ID) REFERENCES Mahasiswa(Mahasiswa_ID) ON DELETE CASCADE,
+  FOREIGN KEY (Kelas_ID) REFERENCES Kelas(Kelas_ID) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Dosen_Kelas (
   Dosen_ID INT,
   Kelas_ID INT,
-  FOREIGN KEY (Dosen_ID) REFERENCES Dosen(Dosen_ID),
-  FOREIGN KEY (Kelas_ID) REFERENCES Kelas(Kelas_ID)
+  FOREIGN KEY (Dosen_ID) REFERENCES Dosen(Dosen_ID) ON DELETE CASCADE,
+  FOREIGN KEY (Kelas_ID) REFERENCES Kelas(Kelas_ID) ON DELETE CASCADE
 );
 
 INSERT IGNORE INTO Dosen (Dosen_ID, Nama, Umur, Jabatan) VALUES

@@ -29,10 +29,9 @@ public:
   std::optional<std::map<std::string, std::vector<std::string>>> get_table(int index);
   std::optional<std::map<std::string, std::vector<std::string>>> get_all_mahasiswa_taught_by_dosen(
     int dosen_index);
-
   bool insert_table(int index);
-
   bool update_table(int index);
+  bool delete_row_in_table(int index);
 
 private:
   struct MetadataWrapper
