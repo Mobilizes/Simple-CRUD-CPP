@@ -18,19 +18,31 @@ void input_process(std::shared_ptr<MySQLController> controller, std::string inpu
       if (controller->insert_table(index)) {
         std::cout << "Data has been inserted successfully" << std::endl;
       }
+
+      return;
     }
-  } else if (prefix.front() == 'r') {
+  }
+
+  if (prefix.front() == 'r') {
     if (prefix.back() == 'a') {
       if (controller->read_all_tables()) {
         std::cout << "All tables been shown" << std::endl;
       }
-    } else if (std::isdigit(prefix.back())) {
+
+      return;
+    }
+
+    if (std::isdigit(prefix.back())) {
       int index = std::stoi(prefix.substr(1));
 
       if (controller->read_table(index)) {
         std::cout << "Table has been shown" << std::endl;
       }
-    } else if (input.substr(0, 3) == "rcm") {
+
+      return;
+    }
+
+    if (input.substr(0, 3) == "rmd") {
       if (std::isdigit(input.back())) {
         int index = std::stoi(input.substr(3));
 
@@ -38,16 +50,21 @@ void input_process(std::shared_ptr<MySQLController> controller, std::string inpu
           std::cout << "Table has been shown" << std::endl;
         }
       }
+
+      return;
     }
-  } else if (prefix == "ex") {
-    throw std::runtime_error("Exiting the program...");
-
-  } else if (input == "clear") {
-    std::cout << "\033[2J\033[2H" << std::endl;
-
-  } else {
-    std::cout << "Invalid input" << std::endl;
   }
+
+  if (prefix == "ex") {
+    throw std::runtime_error("Exiting the program...");
+  }
+
+  if (input == "clear") {
+    std::cout << "\033[2J\033[2H" << std::endl;
+    return;
+  }
+
+  std::cout << "Invalid input!" << std::endl;
 }
 
 void process(std::shared_ptr<MySQLController> controller)
@@ -58,7 +75,7 @@ void process(std::shared_ptr<MySQLController> controller)
   std::cout << "ci. Insert a data to table of index i" << std::endl;
   std::cout << "ra. Show all tables" << std::endl;
   std::cout << "ri. Show the content of table of index i" << std::endl;
-  std::cout << "rcmi. Show the content of table that shows all Mahasiswa associated with Dosen i"
+  std::cout << "rmdi. Show the content of table that shows all Mahasiswa associated with Dosen i"
             << std::endl;
   std::cout << "ex. Exit the program" << std::endl;
 
