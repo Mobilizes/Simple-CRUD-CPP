@@ -24,3 +24,4 @@ To rebuild, `make` again in build.
 
 TODO:
 - Make this app flexible enough to use any MySQL database imported
+- Refactor codes
