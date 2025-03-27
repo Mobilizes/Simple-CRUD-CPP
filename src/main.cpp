@@ -55,6 +55,18 @@ void input_process(std::shared_ptr<MySQLController> controller, std::string inpu
     }
   }
 
+  if (prefix.front() == 'u') {
+    if (std::isdigit(prefix.back())) {
+      int index = std::stoi(prefix.substr(1));
+
+      if (controller->update_table(index)) {
+        std::cout << "Data has been updated successfully" << std::endl;
+      }
+
+      return;
+    }
+  }
+
   if (prefix == "ex") {
     throw std::runtime_error("Exiting the program...");
   }
@@ -77,6 +89,7 @@ void process(std::shared_ptr<MySQLController> controller)
   std::cout << "ri. Show the content of table of index i" << std::endl;
   std::cout << "rmdi. Show the content of table that shows all Mahasiswa associated with Dosen i"
             << std::endl;
+  std::cout << "ui. Update a data in table of index i" << std::endl;
   std::cout << "ex. Exit the program" << std::endl;
 
   std::cout << std::endl;

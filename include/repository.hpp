@@ -32,6 +32,8 @@ public:
 
   bool insert_table(int index);
 
+  bool update_table(int index);
+
 private:
   struct MetadataWrapper
   {
@@ -44,12 +46,16 @@ private:
     {
     }
 
-    sql::ResultSetMetaData * getMetadata() const { return metadata; }
+    sql::ResultSetMetaData * get_metadata() const { return metadata; }
   };
 
-  std::optional<MetadataWrapper> get_table_metadata(int index);
+  MetadataWrapper get_table_metadata(int index);
 
-  std::optional<std::vector<std::string>> get_column_names(sql::ResultSetMetaData *& metadata);
+  std::vector<std::string> get_column_names(sql::ResultSetMetaData *& metadata);
+  std::vector<std::string> get_column_names(
+    std::map<std::string, std::vector<std::string>> & table_data);
+
+  std::string generate_special_password(int len);
 
   sql::ConnectOptionsMap connection_properties;
 

@@ -6,8 +6,13 @@
 #include <cppconn/sqlstring.h>
 #include <cppconn/statement.h>
 
+#include <chrono>
+#include <exception>
+#include <iostream>
 #include <memory>
 #include <optional>
+#include <random>
+#include <stdexcept>
 
 namespace MySQL_Cpp
 {
@@ -55,7 +60,7 @@ std::optional<std::vector<std::string>> MySQLRepository::get_all_tables()
 std::optional<std::map<std::string, std::vector<std::string>>> MySQLRepository::get_table(int index)
 {
   if (index <= 0 || index > table_list.size()) {
-    std::cout << "There is no such index in table list." << std::endl;
+    std::cout << "There is no such index in table list when getting table data" << std::endl;
     return std::nullopt;
   }
 
@@ -130,7 +135,7 @@ MySQLRepository::get_all_mahasiswa_taught_by_dosen(int dosen_index)
 
     return table_data;
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << "Error at getting all Mahasiswa associated with dosen : " << e.what() << std::endl;
     return std::nullopt;
   }
 }
@@ -138,35 +143,34 @@ MySQLRepository::get_all_mahasiswa_taught_by_dosen(int dosen_index)
 bool MySQLRepository::insert_table(int index)
 {
   if (index <= 0 || index > table_list.size()) {
-    std::cout << "There is no such index in table list." << std::endl;
+    std::cout << "There is no such index in table list when insertting data to table." << std::endl;
     return false;
   }
 
   std::string table_name = table_list[index - 1];
 
   try {
-    auto metadata_result = get_table_metadata(index);
-    if (!metadata_result.has_value()) {
-      throw std::runtime_error("Failed to get column names.");
-    }
+    MetadataWrapper metadata_wrapper = get_table_metadata(index);
+    sql::ResultSetMetaData * metadata = metadata_wrapper.get_metadata();
 
-    sql::ResultSetMetaData * metadata = metadata_result.value().getMetadata();
+    std::vector<std::string> column_names = get_column_names(metadata);
 
-    auto column_result = get_column_names(metadata);
-    if (!column_result.has_value()) {
-      throw std::runtime_error("Failed to get column names.");
-    }
+    std::string cancel_key = "\"" + generate_special_password(2);
+    std::cout << "Type (" + cancel_key + ") to cancel the insertion." << std::endl;
 
-    std::vector<std::string> column_names = column_result.value();
     std::map<std::string, std::string> input_data;
     for (const std::string & column_name : column_names) {
       std::cout << "Enter " << column_name << ": ";
       std::cin >> input_data[column_name];
+
+      if (input_data[column_name] == cancel_key) {
+        std::cout << std::endl << "Insertion is cancelled!" << std::endl;
+        return false;
+      }
     }
 
     sql::SQLString question = "INSERT INTO " + table_name + " (";
     for (int i = 0; i < column_names.size(); ++i) {
-      std::cout << input_data[column_names[i]] << std::endl;
       question += column_names[i];
       if (i < column_names.size() - 1) {
         question += ", ";
@@ -190,11 +194,18 @@ bool MySQLRepository::insert_table(int index)
       auto column_type = metadata->getColumnTypeName(i);
       auto column_name = metadata->getColumnName(i);
       if (column_type == "INT") {
-        prep_statement->setInt(i, std::stoi(input_data[column_name]));
+        auto value = std::stoi(input_data[column_name]);
+        prep_statement->setInt(i, value);
       } else if (column_type == "VARCHAR") {
         prep_statement->setString(i, input_data[column_name]);
       } else if (column_type == "BOOLEAN" or column_type == "TINYINT") {
-        prep_statement->setBoolean(i, std::stoi(input_data[column_name]));
+        auto value = std::stoi(input_data[column_name]);
+        if (value < 0 or value > 1) {
+          std::cerr << "Boolean value must be 0 or 1!" << std::endl;
+          return false;
+        }
+
+        prep_statement->setBoolean(i, value);
       } else if (column_type == "DATE") {
         prep_statement->setDateTime(i, input_data[column_name]);
       } else {
@@ -207,57 +218,191 @@ bool MySQLRepository::insert_table(int index)
 
     return true;
   } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << "Error at insert a data to table : " << e.what() << std::endl;
+    if (e.what() == std::string("stoi")) {
+      std::cerr << "Column with number type is filled with non-number value!" << std::endl;
+    }
+
     return false;
   }
 }
 
-std::optional<MySQLRepository::MetadataWrapper> MySQLRepository::get_table_metadata(int index)
+bool MySQLRepository::update_table(int index)
 {
   if (index <= 0 || index > table_list.size()) {
-    std::cerr << "There is no such index in table list." << std::endl;
-    return std::nullopt;
+    std::cout << "There is no such index in table list when updating data in table." << std::endl;
+    return false;
+  }
+
+  std::string table_name = table_list[index - 1];
+
+  try {
+    MetadataWrapper metadata_wrapper = get_table_metadata(index);
+    sql::ResultSetMetaData * metadata = metadata_wrapper.get_metadata();
+
+    std::vector<std::string> column_names = get_column_names(metadata);
+
+    std::string cancel_key = "\"" + generate_special_password(2);
+    std::cout << "Type (" + cancel_key + ") to cancel the insertion." << std::endl;
+
+    std::string skip_key = "\"" + generate_special_password(1);
+    std::cout << "Type (" + skip_key + ") to skip the column." << std::endl;
+
+    std::map<std::string, std::string> input_data;
+    for (int i = 0; i < column_names.size(); ++i) {
+      std::string column_name = column_names[i];
+      
+      std::cout << "Enter " << column_name << ": ";
+      std::cin >> input_data[column_name];
+
+      if (input_data[column_name] == skip_key) {
+        input_data.erase(column_name);
+
+        if (column_name.size() >= 2 && column_name.substr(column_name.size() - 2, 2) == "ID") {
+          std::cout << "You cannot skip ID!" << std::endl;
+          --i;
+        }
+
+        continue;
+      }
+
+      if (input_data[column_name] == cancel_key) {
+        std::cout << std::endl << "Update table is cancelled!" << std::endl;
+        return false;
+      }
+    }
+
+    sql::SQLString question = "UPDATE " + table_name + " SET ";
+
+    std::map<std::string, std::string> primary_keys;
+    bool first = true;
+    for (const auto & [key, val] : input_data) {
+      if (key.size() >= 2 && key.substr(key.size() - 2, 2) == "ID") {
+        primary_keys[key] = val;
+        continue;
+      }
+
+      if (first) {
+        first = false;
+      } else {
+        question += ", ";
+      }
+
+      question += key + " = ?";
+    }
+
+    question += " WHERE ";
+
+    for (const auto & [key, val] : primary_keys) {
+      question += key + " = ?";
+
+      if (key != primary_keys.rbegin()->first) {
+        question += " AND ";
+      }
+    }
+
+    std::unique_ptr<sql::PreparedStatement> prep_statement(conn->prepareStatement(question));
+
+    int question_index = 1;
+    for (int i = 1; i <= metadata->getColumnCount(); ++i) {
+      auto column_type = metadata->getColumnTypeName(i);
+      auto column_name = metadata->getColumnName(i);
+      if (input_data[column_name].empty()) {
+        continue;
+      }
+
+      if (column_name.length() >= 2 && column_name.substr(column_name.length() - 2, 2) == "ID") {
+        continue;
+      }
+
+      if (column_type == "INT") {
+        auto value = std::stoi(input_data[column_name]);
+        prep_statement->setInt(question_index++, value);
+      } else if (column_type == "VARCHAR") {
+        prep_statement->setString(question_index++, input_data[column_name]);
+      } else if (column_type == "BOOLEAN" or column_type == "TINYINT") {
+        auto value = std::stoi(input_data[column_name]);
+        if (value < 0 or value > 1) {
+          std::cerr << "Boolean value must be 0 or 1!" << std::endl;
+          return false;
+        }
+
+        prep_statement->setBoolean(question_index++, value);
+      } else if (column_type == "DATE") {
+        prep_statement->setDateTime(question_index++, input_data[column_name]);
+      } else {
+        std::cerr << "Column type not supported : " << column_type << std::endl;
+        return false;
+      }
+    }
+
+    for (const auto & [key, val] : primary_keys) {
+      prep_statement->setInt(question_index++, std::stoi(val));
+    }
+
+    prep_statement->execute();
+
+    return true;
+  } catch (const std::exception & e) {
+    std::cerr << "Error at update data in table : " << e.what() << std::endl;
+    return false;
+  }
+}
+
+MySQLRepository::MetadataWrapper MySQLRepository::get_table_metadata(int index)
+{
+  if (index <= 0 || index > table_list.size()) {
+    throw std::runtime_error("There is no such index in table list when getting table metadata.");
   }
 
   std::string table_name = table_list[index - 1];
   sql::SQLString query = "SELECT * FROM " + table_name + " LIMIT 1";
 
-  try {
-    std::unique_ptr<sql::Statement> statement(conn->createStatement());
-    std::unique_ptr<sql::ResultSet> result(statement->executeQuery(query));
+  std::unique_ptr<sql::Statement> statement(conn->createStatement());
+  std::unique_ptr<sql::ResultSet> result(statement->executeQuery(query));
 
-    return MetadataWrapper(std::move(statement), std::move(result));
-  } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
-    return std::nullopt;
-  }
+  return MetadataWrapper(std::move(statement), std::move(result));
 }
 
-std::optional<std::vector<std::string>> MySQLRepository::get_column_names(
+std::vector<std::string> MySQLRepository::get_column_names(
   sql::ResultSetMetaData *& metadata)
 {
   if (!metadata) {
-    std::cerr << "Error: metadata is null." << std::endl;
-    return std::nullopt;
+    throw std::runtime_error("Metadata is null.");
   }
 
   std::vector<std::string> column_names;
 
-  try {
-    for (int i = 1; i <= metadata->getColumnCount(); ++i) {
-      column_names.push_back(metadata->getColumnName(i));
-    }
-  } catch (const std::exception & e) {
-    std::cerr << e.what() << std::endl;
-    return std::nullopt;
-  }
-
-  if (column_names.empty()) {
-    std::cerr << "Failed to get column names." << std::endl;
-    return std::nullopt;
+  for (int i = 1; i <= metadata->getColumnCount(); ++i) {
+    column_names.push_back(metadata->getColumnName(i));
   }
 
   return column_names;
+}
+
+std::vector<std::string> MySQLRepository::get_column_names(
+  std::map<std::string, std::vector<std::string>> & table_data)
+{
+  std::vector<std::string> column_names;
+
+  for (const auto & [key, val] : table_data) {
+    column_names.push_back(key);
+  }
+
+  return column_names;
+}
+
+std::string MySQLRepository::generate_special_password(int len)
+{
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+  std::string cancel_key;
+  for (int i = 0; i < len; ++i) {
+    cancel_key += char('a' + rand() % 26);
+  }
+
+  std::shuffle(cancel_key.begin(), cancel_key.end(), std::default_random_engine(seed));
+  return cancel_key;
 }
 
 };  // namespace MySQL_Cpp
